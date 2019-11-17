@@ -1,44 +1,53 @@
 #!/usr/bin/env python3
-from docopt import docopt
 import time
 import os
 import shutil
 import exifread
 import ipdb
+import fire
 
 
-def main(*args):
+def main(source, output_type="jpg", destination=None, move=False):
     """
     Import Pictures from card and save them in folders, one for each day
 
-    Usage:
-        pic_import.py [options] <source>
-        pic_import.py (-h|--help)
-
-    Options:
-        -h --help                 Show this help message and exit
-        --destination <dest>      Destination folder [default: /home/kabbe/Bilder/Olympus]
-        --type <type>, -t <type>  Picture type [default: jpg]
-        --move                    Move pictures instead of copying them [default: False]
+    Arguments:
+        destination: str
+            Destination folder
+        output_type: str
+            Picture type
+        move: bool
+            Move pictures instead of copying them
     """
-    args = docopt(main.__doc__)
-
-    ending_length = len(args["--type"])
-    pics = [os.path.join(args["<source>"], f) for f in os.listdir(args["<source>"]) if f[-ending_length-1:].upper() == ".{}".format(args["--type"].upper())]
+    ending_length = len(output_type)
+    pics = [
+        os.path.join(source, f)
+        for f in os.listdir(source)
+        if f[-ending_length - 1 :].upper() == ".{}".format(output_type.upper())
+    ]
 
     print(len(pics), "pics found")
 
-    dates = sorted(list(set([time.strftime("%Y-%m-%d", time.gmtime(os.path.getctime(pic))) for pic in pics])))
+    dates = sorted(
+        list(
+            set(
+                [
+                    time.strftime("%Y-%m-%d", time.gmtime(os.path.getctime(pic)))
+                    for pic in pics
+                ]
+            )
+        )
+    )
 
     for date in dates:
-        save_dir = os.path.join(args["--destination"], date, args["--type"])
+        save_dir = os.path.join(destination, date, output_type)
         if os.path.exists(save_dir):
             print("Uh oh, path {} already existing".format(save_dir))
         else:
             print("I will create a directory", save_dir)
             os.makedirs(save_dir)
 
-    if args["--move"]:
+    if move:
         print("Moving files...")
     else:
         print("Copying files...")
@@ -46,18 +55,26 @@ def main(*args):
     for pic in pics:
         date_path = time.strftime("%Y-%m-%d", time.gmtime(os.path.getctime(pic)))
         last_slash_index = pic.rfind("/")
-        pic_without_path = pic[last_slash_index+1:]
-        dest_path = os.path.join(args["--destination"], date_path, args["--type"])
+        pic_without_path = pic[last_slash_index + 1 :]
+        dest_path = os.path.join(destination, date_path, output_type)
         if os.path.exists(os.path.join(dest_path, pic_without_path)):
             print("Uh oh, file {} already exists".format(pic_without_path))
         else:
-            if args["--move"]:
-                print("Moving file {} to {}".format(pic[last_slash_index+1:], dest_path))
+            if move:
+                print(
+                    "Moving file {} to {}".format(
+                        pic[last_slash_index + 1 :], dest_path
+                    )
+                )
                 shutil.move(pic, dest_path)
             else:
-                print("copying file {} to {}".format(pic[last_slash_index+1:], dest_path))
+                print(
+                    "copying file {} to {}".format(
+                        pic[last_slash_index + 1 :], dest_path
+                    )
+                )
                 shutil.copy2(pic, dest_path)
 
 
 if __name__ == "__main__":
-    main()
+    fire.Fire(main)
