@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 import time
 import os
+import pathlib
 import shutil
 import exifread
-import ipdb
 import fire
 
 
-def main(source, output_type="jpg", destination=None, move=False):
+def get_creation_date(path):
+    return time.strftime("%Y-%m-%d", time.gmtime(os.path.getctime(path)))
+
+
+def main(source, destination, output_type="jpg", move=False):
     """
     Import Pictures from card and save them in folders, one for each day
 
@@ -19,28 +23,21 @@ def main(source, output_type="jpg", destination=None, move=False):
         move: bool
             Move pictures instead of copying them
     """
+    source = pathlib.Path(source)
+    destination = pathlib.Path(destination)
     ending_length = len(output_type)
     pics = [
-        os.path.join(source, f)
+        source / f
         for f in os.listdir(source)
         if f[-ending_length - 1 :].upper() == ".{}".format(output_type.upper())
     ]
 
     print(len(pics), "pics found")
 
-    dates = sorted(
-        list(
-            set(
-                [
-                    time.strftime("%Y-%m-%d", time.gmtime(os.path.getctime(pic)))
-                    for pic in pics
-                ]
-            )
-        )
-    )
+    dates = sorted(list(set([get_creation_date(pic) for pic in pics])))
 
     for date in dates:
-        save_dir = os.path.join(destination, date, output_type)
+        save_dir = destination / date
         if os.path.exists(save_dir):
             print("Uh oh, path {} already existing".format(save_dir))
         else:
@@ -53,28 +50,26 @@ def main(source, output_type="jpg", destination=None, move=False):
         print("Copying files...")
 
     for pic in pics:
-        date_path = time.strftime("%Y-%m-%d", time.gmtime(os.path.getctime(pic)))
-        last_slash_index = pic.rfind("/")
-        pic_without_path = pic[last_slash_index + 1 :]
-        dest_path = os.path.join(destination, date_path, output_type)
-        if os.path.exists(os.path.join(dest_path, pic_without_path)):
-            print("Uh oh, file {} already exists".format(pic_without_path))
+        date_path = get_creation_date(pic)
+        dest_path = destination / date_path / output_type
+        dest_path.mkdir(parents=True, exist_ok=True)
+        dest_file = dest_path / pic.name
+
+        if dest_file.exists():
+            print("Uh oh, file {} already exists".format(dest_file))
+            continue
+
+        if move:
+            print("Moving file {} to {}".format(pic, dest_file))
+            shutil.move(pic, dest_file)
         else:
-            if move:
-                print(
-                    "Moving file {} to {}".format(
-                        pic[last_slash_index + 1 :], dest_path
-                    )
-                )
-                shutil.move(pic, dest_path)
-            else:
-                print(
-                    "copying file {} to {}".format(
-                        pic[last_slash_index + 1 :], dest_path
-                    )
-                )
-                shutil.copy2(pic, dest_path)
+            print("copying file {} to {}".format(pic, dest_file))
+            shutil.copy2(pic, dest_file)
+
+
+def cli():
+    fire.Fire(main)
 
 
 if __name__ == "__main__":
-    fire.Fire(main)
+    cli()
