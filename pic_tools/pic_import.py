@@ -3,15 +3,27 @@ import time
 import os
 import pathlib
 import shutil
-import exifread
 import fire
+from PIL import Image, ExifTags
 
 
-def get_creation_date(path):
+def get_creation_date_from_exif(path):
+    img = Image.open(path)
+    # 36867: DateTimeOriginal
+    return img.getexif()[36867].split()[0].replace(":", "-")
+
+
+def get_creation_date(path, exif=False):
+    if exif:
+        try:
+            return get_creation_date_from_exif(path)
+        except KeyError:
+            return get_creation_date(path, exif=False)
+
     return time.strftime("%Y-%m-%d", time.gmtime(os.path.getctime(path)))
 
 
-def main(source, destination, output_type="jpg", move=False):
+def main(source, destination, output_type="jpg", move=False, exif=False):
     """
     Import Pictures from card and save them in folders, one for each day
 
@@ -34,7 +46,8 @@ def main(source, destination, output_type="jpg", move=False):
 
     print(len(pics), "pics found")
 
-    dates = sorted(list(set([get_creation_date(pic) for pic in pics])))
+    creation_date_per_pic = {pic: get_creation_date(pic, exif=exif) for pic in pics}
+    dates = sorted(list(set(creation_date_per_pic.values())))
 
     for date in dates:
         save_dir = destination / date
@@ -50,7 +63,7 @@ def main(source, destination, output_type="jpg", move=False):
         print("Copying files...")
 
     for pic in pics:
-        date_path = get_creation_date(pic)
+        date_path = creation_date_per_pic[pic]
         dest_path = destination / date_path / output_type
         dest_path.mkdir(parents=True, exist_ok=True)
         dest_file = dest_path / pic.name
