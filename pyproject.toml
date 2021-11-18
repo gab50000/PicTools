@@ -8,7 +8,11 @@ author = "Gabriel Kabbe"
 author-email = "gabriel.kabbe@mail.de"
 home-page = "https://github.com/gab50000/PicTools"
 classifiers = ["License :: OSI Approved :: MIT License"]
-requires = ["fire", "exifread"]
+requires = [
+    "fire", 
+    "exifread",
+    "Pillow"
+]
 
 [tool.flit.scripts]
 pic_import = "pic_tools.pic_import:cli"
