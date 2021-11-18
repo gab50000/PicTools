@@ -37,22 +37,23 @@ def main(source, destination, output_type="jpg", move=False, exif=False):
     """
     source = pathlib.Path(source)
     destination = pathlib.Path(destination)
-    ending_length = len(output_type)
     pics = [
         source / f
         for f in os.listdir(source)
-        if f[-ending_length - 1 :].upper() == ".{}".format(output_type.upper())
+        if f.lower().endswith(f".{output_type.lower()}")
     ]
 
     print(len(pics), "pics found")
+    if not pics:
+        return
 
     creation_date_per_pic = {pic: get_creation_date(pic, exif=exif) for pic in pics}
-    dates = sorted(list(set(creation_date_per_pic.values())))
+    dates = sorted(set(creation_date_per_pic.values()))
 
     for date in dates:
         save_dir = destination / date
         if os.path.exists(save_dir):
-            print("Uh oh, path {} already existing".format(save_dir))
+            print(f"Uh oh, path {save_dir} already existing")
         else:
             print("I will create a directory", save_dir)
             os.makedirs(save_dir)
@@ -69,14 +70,14 @@ def main(source, destination, output_type="jpg", move=False, exif=False):
         dest_file = dest_path / pic.name
 
         if dest_file.exists():
-            print("Uh oh, file {} already exists".format(dest_file))
+            print(f"Uh oh, file {dest_file} already exists")
             continue
 
         if move:
-            print("Moving file {} to {}".format(pic, dest_file))
+            print(f"Moving file {pic} to {dest_file}")
             shutil.move(pic, dest_file)
         else:
-            print("copying file {} to {}".format(pic, dest_file))
+            print(f"Copying file {pic} to {dest_file}".format(pic, dest_file))
             shutil.copy2(pic, dest_file)
 
 
