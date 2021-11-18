@@ -10,7 +10,9 @@ from pic_tools.pic_import import main
 def random_date(low: str, high: str):
     timestamp_low = datetime.strptime(low, "%Y-%M-%d").timestamp()
     timestamp_high = datetime.strptime(high, "%Y-%M-%d").timestamp()
-    rand_date = date.fromtimestamp(random.randint(timestamp_low, timestamp_high))
+    rand_date = date.fromtimestamp(
+        random.randint(int(timestamp_low), int(timestamp_high))
+    )
     return rand_date
 
 
@@ -21,7 +23,7 @@ def random_filename():
 
 
 def test_copying(tmp_path, monkeypatch):
-    def mock_get_date(path):
+    def mock_get_date(path, exif=False):
         return path.stem[:-9]
 
     monkeypatch.setattr("pic_tools.pic_import.get_creation_date", mock_get_date)
