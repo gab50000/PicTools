@@ -1,9 +1,8 @@
-from datetime import date, datetime
 import random
+from datetime import date, datetime
 from string import ascii_lowercase
 
 import pytest
-
 from pic_tools.pic_import import main
 
 

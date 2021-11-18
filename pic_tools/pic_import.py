@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-import time
 import os
 import pathlib
 import shutil
+import time
+
 import fire
-from PIL import Image, ExifTags
+from PIL import Image
 
 
 def get_creation_date_from_exif(path):
