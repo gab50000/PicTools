@@ -16,3 +16,4 @@ requires = [
 
 [tool.flit.scripts]
 pic_import = "pic_tools.pic_import:cli"
+pic_check_completeness = "pic_tools.check_completeness:cli"
